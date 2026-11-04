@@ -70,6 +70,8 @@ Connection: keep-alive
 ### 1. 安装
 
 ```bash
+git clone https://github.com/crhywun/st2at.git
+cd st2at
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"

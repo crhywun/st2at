@@ -114,9 +114,9 @@ proxy.example.com:10000:demo-user-region-JP-session-demo123-sessTime-5:example-p
 
 ```json
 {
-  "accessToken": "example-token",
-  "sessionToken": "example-token",
-  "idToken": "example-token"
+  "accessToken": "<ACCESS_TOKEN>",
+  "sessionToken": "<SESSION_TOKEN>",
+  "idToken": "<ID_TOKEN>"
 }
 ```
 

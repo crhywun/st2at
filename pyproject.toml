@@ -41,8 +41,8 @@ dev = [
 st2at = "st2at.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/your-org/st2at"
-Issues = "https://github.com/your-org/st2at/issues"
+Homepage = "https://github.com/crhywun/st2at"
+Issues = "https://github.com/crhywun/st2at/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]
