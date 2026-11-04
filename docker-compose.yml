@@ -1,0 +1,22 @@
+services:
+  st2at:
+    build: .
+    image: st2at:local
+    ports:
+      - "8000:8000"
+    environment:
+      ST2AT_PROXY: ${ST2AT_PROXY:-}
+      ST2AT_IMPERSONATE: ${ST2AT_IMPERSONATE:-chrome110}
+      ST2AT_TIMEOUT: ${ST2AT_TIMEOUT:-30}
+      ST2AT_VERIFY_TLS: ${ST2AT_VERIFY_TLS:-true}
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3)"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

@@ -1,0 +1,16 @@
+.git
+.gitignore
+.github
+.DS_Store
+.venv
+venv
+__pycache__
+*.pyc
+.pytest_cache
+.ruff_cache
+.mypy_cache
+tests
+docs
+.env
+.env.*
+!.env.example
