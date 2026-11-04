@@ -53,8 +53,21 @@ coverage.xml
 
 # Local secrets
 .env
+.env.*
 !.env.example
+*.pem
+*.key
+*.p12
 
-# Logs and local data
-*.log
+# Local account exports and captures
+*.xlsx
+*.xls
+*.csv
+*.har
+accounts/
+exports/
 data/
+
+# Logs
+*.log
+*.db
