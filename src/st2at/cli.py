@@ -84,6 +84,47 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="print the result as JSON",
     )
+
+    login = sub.add_parser(
+        "login",
+        help="re-login with email + password + TOTP to obtain a fresh AT/ST",
+    )
+    login.add_argument("--email", required=True)
+    login.add_argument(
+        "--password",
+        default=os.getenv("ST2AT_LOGIN_PASSWORD"),
+        help="account password; defaults to ST2AT_LOGIN_PASSWORD",
+    )
+    login.add_argument(
+        "--totp-secret",
+        default=os.getenv("ST2AT_TOTP_SECRET"),
+        help="base32 TOTP secret; defaults to ST2AT_TOTP_SECRET",
+    )
+    login.add_argument(
+        "--proxy",
+        default=os.getenv("ST2AT_PROXY", "").strip() or None,
+        help="HTTP/SOCKS proxy URI or host:port:user:pass",
+    )
+    login.add_argument(
+        "--proxy-region",
+        default=os.getenv("ST2AT_PROXY_REGION", "").strip().upper() or "JP",
+        help="two-letter exit country code (default: JP)",
+    )
+    login.add_argument(
+        "--workspace-id",
+        default=os.getenv("ST2AT_WORKSPACE_ID", "").strip() or "",
+        help="optional workspace id to select during login",
+    )
+    login.add_argument(
+        "--verbose",
+        action="store_true",
+        help="show upstream login progress on stderr",
+    )
+    login.add_argument(
+        "--json",
+        action="store_true",
+        help="print the result as JSON",
+    )
     return parser
 
 
@@ -139,12 +180,65 @@ async def _run(args: argparse.Namespace) -> int:
     return 0
 
 
+def _run_login(args: argparse.Namespace) -> int:
+    from .login import login_with_password_totp
+
+    if not args.password:
+        print(
+            "st2at: password is required (--password or ST2AT_LOGIN_PASSWORD)",
+            file=sys.stderr,
+        )
+        return 2
+    if not args.totp_secret:
+        print(
+            "st2at: totp secret is required (--totp-secret or ST2AT_TOTP_SECRET)",
+            file=sys.stderr,
+        )
+        return 2
+
+    log = (
+        (lambda message: print(message, file=sys.stderr))
+        if args.verbose
+        else (lambda _message: None)
+    )
+    result = login_with_password_totp(
+        args.email,
+        password=args.password,
+        totp_secret=args.totp_secret,
+        proxy=args.proxy,
+        region=args.proxy_region,
+        workspace_id=args.workspace_id,
+        log=log,
+    )
+    if args.json:
+        print(json.dumps(result.to_dict(), ensure_ascii=False, indent=2))
+    else:
+        print(f"ok: {result.ok}")
+        print(f"email: {result.email}")
+        if result.access_token:
+            print(f"access_token: {result.access_token}")
+        if result.session_token:
+            print(f"session_token: {result.session_token}")
+        if result.account_id:
+            print(f"account_id: {result.account_id}")
+        if result.expires_at:
+            print(f"expires_at: {result.expires_at.isoformat()}")
+        if result.error:
+            print(f"error: {result.error}", file=sys.stderr)
+    return 0 if result.ok else 3
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     if args.command == "refresh":
         try:
             return asyncio.run(_run(args))
+        except KeyboardInterrupt:
+            return 130
+    if args.command == "login":
+        try:
+            return _run_login(args)
         except KeyboardInterrupt:
             return 130
     parser.print_help()

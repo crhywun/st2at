@@ -18,3 +18,17 @@ Reference project copyright:
 
 The reference project is licensed under the MIT License. A copy of the MIT
 License is included in LICENSE.
+
+
+Password/TOTP relogin
+----------------------
+
+The optional relogin module is adapted from pay153-local:
+
+  backend/relogin_auth.py
+  backend/chatgpt_login_st.py
+  backend/registration_fingerprint.py
+
+It vendors a minimal Python-only copy of tokenrefresh 1.1.0 under
+src/st2at/_vendor/tokenrefresh. The vendored copy keeps its original module
+names and is loaded only when st2at.login is used.

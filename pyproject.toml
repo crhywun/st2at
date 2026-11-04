@@ -26,6 +26,8 @@ dependencies = [
   "curl-cffi>=0.16.3",
   "fastapi>=0.109.0",
   "pydantic>=2.5.0",
+  "requests>=2.31.0",
+  "urllib3>=2.0.0",
   "uvicorn[standard]>=0.27.0",
 ]
 
@@ -50,12 +52,20 @@ where = ["src"]
 [tool.ruff]
 line-length = 88
 target-version = "py310"
+extend-exclude = [
+  "src/st2at/_vendor",
+  "src/st2at/login/relogin_auth.py",
+  "src/st2at/login/chatgpt_login_st.py",
+  "src/st2at/login/registration_fingerprint.py",
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "RUF"]
 
 [tool.ruff.lint.per-file-ignores]
 "src/st2at/web.py" = ["E501", "RUF001"]
+"src/st2at/login/*.py" = ["E501", "I001", "RUF001", "RUF002", "RUF003", "RUF005", "B010", "B905", "UP012", "UP035"]
+"src/st2at/_vendor/**" = ["E", "F", "I", "UP", "B", "RUF"]
 
 [tool.pytest.ini_options]
 addopts = "-q"

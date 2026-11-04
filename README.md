@@ -2,10 +2,10 @@
 
 # st2at
 
-**ChatGPT ST → AT，只做这一件事。**
+**ChatGPT ST → AT，以及 ST 失效后的密码 + 2FA 重登。**
 
-把一个 `__Secure-next-auth.session-token` 换成新的 `accessToken`。
-一条请求、一个接口、一个 CLI，没有数据库，没有账号体系，没有多余功能。
+把一个 `__Secure-next-auth.session-token` 换成新的 `accessToken`；ST 已经刷不出 AT 时，用邮箱密码 + TOTP 重新登录拿一套新的 AT/ST。
+一个核心请求、一个 CLI、一个可选的重登模块，没有数据库，没有账号体系。
 
 <sub>Python 3.10+ · FastAPI · curl_cffi · MIT</sub>
 
@@ -30,6 +30,7 @@ __Secure-next-auth.session-token  ──GET /api/auth/session──▶  accessTo
 - 命令行里快速把 ST 换成 AT
 - 给脚本或其他服务提供一个只负责换 Token 的 HTTP 接口
 - 在网页、CLI、API 三个入口里选择目标 `workspace_id`
+- ST 返回 `RefreshAccessTokenError` 时，用密码 + TOTP 重登拿新 AT/ST
 - 作为一个可读、可测试的 ChatGPT Web 会话协议参考实现
 
 ## 核心协议
@@ -194,6 +195,59 @@ asyncio.run(main())
 
 完整示例见 [examples/refresh_once.py](examples/refresh_once.py)。
 
+## 密码 + 2FA 重登
+
+当 ST 还能读会话、但上游返回 `RefreshAccessTokenError` 时，ST 本身已经刷不出新 AT。此时用账号密码 + TOTP 重新登录：
+
+```bash
+export ST2AT_LOGIN_PASSWORD='your-password'
+export ST2AT_TOTP_SECRET='BASE32TOTPSECRET'
+export ST2AT_PROXY='proxy.example.com:10000:demo-user-region-JP-session-demo123-sessTime-5:example-pass'
+
+st2at login \
+  --email 'user@example.com' \
+  --workspace-id '3f1c2d8e-...' \
+  --proxy-region JP \
+  --json
+```
+
+返回：
+
+```json
+{
+  "ok": true,
+  "email": "user@example.com",
+  "access_token": "eyJ...",
+  "session_token": "eyJ...",
+  "account_id": "3f1c2d8e-...",
+  "expires_at": "2026-11-14T12:34:22+00:00",
+  "error": null
+}
+```
+
+`--workspace-id` 可省略，省略时自动选择账号可用空间（优先 Team，其次第一个）。每次重登会通过代理模块生成新的 sticky session；密码和 TOTP 只从命令行参数或环境变量读取，不落盘。
+
+作为库调用：
+
+```python
+from st2at.login import login_with_password_totp
+
+result = login_with_password_totp(
+    "user@example.com",
+    password="your-password",
+    totp_secret="BASE32TOTPSECRET",
+    proxy="proxy.example.com:10000:demo-user-region-JP-session-demo123-sessTime-5:example-pass",
+    region="JP",
+)
+if result.ok:
+    print(result.access_token)
+    print(result.session_token)
+else:
+    print(result.error)
+```
+
+重登模块适配自 `pay153-local` 的 `relogin_auth.py`，并随项目提供 `tokenrefresh` 的最小 vendored 副本；它不参与普通的 ST → AT 快路径。
+
 ## API
 
 ### `POST /v1/refresh`
@@ -315,6 +369,7 @@ ST2AT_IMPERSONATE=chrome146 st2at refresh --st-file -
 
 `st2at` 不包含：
 
+- 数据库、账号导入和后台管理
 - SQLAlchemy 模型与加密存储
 - Team 账号、代理池、Free 号池
 - RT 刷新和 OAuth 回调
@@ -329,6 +384,8 @@ ST2AT_IMPERSONATE=chrome146 st2at refresh --st-file -
 - CLI：`--workspace-id`
 - HTTP：`POST /v1/refresh` 的 `workspace_id`
 - 上游请求：自动追加 `exchange_workspace_token=true&workspace_id=...&reason=setCurrentAccount`
+
+密码 + TOTP 重登链路适配自 `pay153-local` 的 `backend/relogin_auth.py`，所需的 `tokenrefresh` 代码以最小 vendored 副本放在 `src/st2at/_vendor/tokenrefresh`。
 
 ## 开发
 

@@ -1,0 +1,8 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Vendored public OAuth client identifiers"
+paths = [
+  '''src/st2at/_vendor/tokenrefresh/constants\.py''',
+]

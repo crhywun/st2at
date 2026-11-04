@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Optional password + TOTP relogin flow (`st2at login`, `st2at.login`)
+- Workspace selection during relogin
+- Vendored tokenrefresh Python helpers for the relogin flow
+
 ### Changed
 
 - Default browser fingerprint is now `chrome150` for the Chrome 146–150 range
