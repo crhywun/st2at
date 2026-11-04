@@ -5,10 +5,12 @@ from __future__ import annotations
 import inspect
 import re
 from collections.abc import Callable
+from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import urlencode
 
 from .errors import (
+    ExpiredAccessTokenError,
     InvalidWorkspaceError,
     RateLimitedError,
     SessionRejectedError,
@@ -17,6 +19,7 @@ from .errors import (
     UpstreamTransportError,
 )
 from .models import RefreshResult
+from .proxy import prepare_proxy
 from .token import extract_claims, normalize_session_token
 
 DEFAULT_BASE_URL = "https://chatgpt.com"
@@ -68,6 +71,7 @@ class ST2ATClient:
         *,
         base_url: str = DEFAULT_BASE_URL,
         proxy: str | None = None,
+        proxy_region: str | None = None,
         impersonate: str = DEFAULT_IMPERSONATE,
         timeout: float = 30.0,
         verify_tls: bool = True,
@@ -75,15 +79,17 @@ class ST2ATClient:
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.proxy = proxy or None
+        self.proxy_region = proxy_region or None
         self.impersonate = impersonate
         self.timeout = float(timeout)
         self.verify_tls = bool(verify_tls)
         self._session_factory = session_factory
 
     def _open_session(self) -> Any:
+        proxy = prepare_proxy(self.proxy, region=self.proxy_region)
         if self._session_factory is not None:
             return self._session_factory(
-                proxy=self.proxy,
+                proxy=proxy,
                 impersonate=self.impersonate,
                 timeout=self.timeout,
                 verify=self.verify_tls,
@@ -91,11 +97,7 @@ class ST2ATClient:
 
         from curl_cffi.requests import AsyncSession
 
-        proxies = (
-            {"all": self.proxy, "http": self.proxy, "https": self.proxy}
-            if self.proxy
-            else None
-        )
+        proxies = {"all": proxy, "http": proxy, "https": proxy} if proxy else None
         return AsyncSession(
             impersonate=self.impersonate,
             proxies=proxies,
@@ -202,6 +204,15 @@ class ST2ATClient:
                         f"ChatGPT response did not include accessToken{suffix}"
                     )
 
+                claims = extract_claims(access_token)
+                if claims.expires_at is not None and claims.expires_at <= datetime.now(
+                    timezone.utc
+                ):
+                    raise ExpiredAccessTokenError(
+                        "ChatGPT returned an expired accessToken "
+                        f"(exp={claims.expires_at.isoformat()})"
+                    )
+
                 return RefreshResult(
                     access_token=access_token,
                     session_token=_nonempty_str(
@@ -210,7 +221,7 @@ class ST2ATClient:
                     id_token=_nonempty_str(
                         payload.get("idToken") or payload.get("id_token")
                     ),
-                    claims=extract_claims(access_token),
+                    claims=claims,
                     upstream_status=status,
                 )
 

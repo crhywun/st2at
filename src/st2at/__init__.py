@@ -2,6 +2,7 @@
 
 from .client import ST2ATClient
 from .errors import (
+    ExpiredAccessTokenError,
     InvalidSessionTokenError,
     InvalidWorkspaceError,
     RateLimitedError,
@@ -14,6 +15,7 @@ from .errors import (
 from .models import RefreshResult, TokenClaims
 
 __all__ = [
+    "ExpiredAccessTokenError",
     "InvalidSessionTokenError",
     "InvalidWorkspaceError",
     "RateLimitedError",

@@ -69,6 +69,25 @@ AsyncSession(
 
 如果改用普通 `requests`/`httpx` 默认 TLS 指纹，Cloudflare 可能直接返回 `403`，即使 Cookie 本身有效。
 
+### 2.4 动态代理出口
+
+BestGo / 711 裸格式：
+
+```text
+proxy.example.com:10000:demo-user-region-JP-session-demo123-sessTime-5:example-pass
+```
+
+本项目的处理顺序：
+
+1. 解析 `host:port:user:pass`
+2. 读取用户名里的 `-region-JP`、`-session-abc123`、`-sessTime-5`
+3. 每次 `refresh()` 生成新的随机 session，替换旧 session
+4. 保留 region 和 sessTime，拼回 `socks5h://user:pass@host:port`
+5. 将该 URI 交给 `curl_cffi`
+
+同一个 session 固定落到同一个出口 IP；换 session 就换出口。每次刷新换一次 session，保证不同请求不撞 IP。
+
+
 ## 3. 响应
 
 成功时 HTTP 200，Content-Type 为 JSON：

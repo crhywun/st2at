@@ -48,6 +48,11 @@ class UpstreamResponseError(ST2ATError):
     http_status = 502
 
 
+class ExpiredAccessTokenError(ST2ATError):
+    code = "expired_access_token"
+    http_status = 502
+
+
 class UpstreamTransportError(ST2ATError):
     code = "upstream_transport_error"
     http_status = 502

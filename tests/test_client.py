@@ -6,6 +6,7 @@ import pytest
 
 from st2at.client import ST2ATClient
 from st2at.errors import (
+    ExpiredAccessTokenError,
     InvalidWorkspaceError,
     RateLimitedError,
     SessionRejectedError,
@@ -194,4 +195,14 @@ async def test_wraps_session_creation_failure():
 
     client = ST2ATClient(session_factory=explode)
     with pytest.raises(UpstreamTransportError, match="could not create HTTP session"):
+        await client.refresh("st-value")
+
+
+@pytest.mark.asyncio
+async def test_rejects_expired_access_token_returned_with_http_200():
+    expired = f"{b64({'alg': 'RS256'})}.{b64({'exp': 1})}.signature"
+    client = ST2ATClient(
+        session_factory=FakeFactory(FakeResponse(200, {"accessToken": expired}))
+    )
+    with pytest.raises(ExpiredAccessTokenError, match="expired accessToken"):
         await client.refresh("st-value")

@@ -56,7 +56,12 @@ def build_parser() -> argparse.ArgumentParser:
     refresh.add_argument(
         "--proxy",
         default=os.getenv("ST2AT_PROXY", "").strip() or None,
-        help="HTTP/SOCKS proxy URL; defaults to ST2AT_PROXY",
+        help="HTTP/SOCKS proxy URI or host:port:user:pass; defaults to ST2AT_PROXY",
+    )
+    refresh.add_argument(
+        "--proxy-region",
+        default=os.getenv("ST2AT_PROXY_REGION", "").strip().upper() or None,
+        help="two-letter exit country code; overrides -region-XX in the proxy username",
     )
     refresh.add_argument(
         "--impersonate",
@@ -91,6 +96,7 @@ async def _run(args: argparse.Namespace) -> int:
 
     client = ST2ATClient(
         proxy=args.proxy,
+        proxy_region=args.proxy_region,
         impersonate=args.impersonate,
         timeout=args.timeout,
         verify_tls=not args.insecure,

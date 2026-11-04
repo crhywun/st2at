@@ -237,6 +237,7 @@ asyncio.run(main())
 | 429 | `upstream_rate_limited` | 上游返回 429 |
 | 502 | `upstream_http_error` | 上游返回其他 4xx/5xx |
 | 502 | `upstream_bad_response` | 200 但 JSON 坏或没有 `accessToken` |
+| 502 | `expired_access_token` | 200 但返回的 AT 已过期 |
 | 502 | `upstream_transport_error` | DNS、连接、TLS、超时等传输失败 |
 
 ### `GET /healthz`
@@ -253,12 +254,37 @@ HTTP 服务的配置全部来自环境变量：
 |---|---|---|
 | `ST2AT_HOST` | `0.0.0.0` | 监听地址 |
 | `ST2AT_PORT` | `8000` | 监听端口 |
-| `ST2AT_PROXY` | 空 | 显式代理，如 `http://user:pass@host:8080` 或 `socks5h://...` |
+| `ST2AT_PROXY` | 空 | 代理 URI 或 `host:port:user:pass` 裸格式 |
+| `ST2AT_PROXY_REGION` | 空 | 两位国家码，覆盖代理用户名里的 `-region-XX` |
 | `ST2AT_IMPERSONATE` | `chrome150` | curl_cffi 浏览器指纹，可选 `chrome146` / `chrome150` |
 | `ST2AT_TIMEOUT` | `30` | 单次请求超时秒数 |
 | `ST2AT_VERIFY_TLS` | `true` | 是否校验 TLS 证书 |
 
-CLI 还支持 `--proxy`、`--impersonate`、`--timeout`、`--insecure`。
+CLI 还支持 `--proxy`、`--proxy-region`、`--impersonate`、`--timeout`、`--insecure`。
+
+### 动态代理
+
+BestGo / 711 这类裸格式直接填：
+
+```text
+proxy.example.com:10000:demo-user-region-JP-session-demo123-sessTime-5:example-pass
+```
+
+程序按以下规则处理：
+
+- 裸格式按 `socks5h://` 连接
+- `-region-JP` 固定出口国家；`ST2AT_PROXY_REGION=US` 可覆盖
+- 每次 `refresh()` 都把 `-session-abc123` 换成新的随机 session，保证每次请求使用不同出口 IP
+- 原有 `-sessTime-5` 保留，不改成固定默认值
+- 标准 `http://` / `https://` 静态代理原样传入
+
+CLI 示例：
+
+```bash
+export ST2AT_PROXY='proxy.example.com:10000:demo-user-region-JP-session-demo123-sessTime-5:example-pass'
+export ST2AT_PROXY_REGION=JP
+printf '%s' "$ST" | st2at refresh --st-file -
+```
 
 `curl_cffi 0.16.3` 的 Chrome profile 里，146–150 区间只有 `chrome146` 与 `chrome150` 两个精确值；`chrome147`、`chrome148`、`chrome149` 没有独立 profile。默认 `chrome150`，需要固定 146 时用：
 

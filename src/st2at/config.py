@@ -28,6 +28,7 @@ class Settings:
     host: str = "0.0.0.0"
     port: int = 8000
     proxy: str | None = None
+    proxy_region: str | None = None
     impersonate: str = "chrome150"
     timeout: float = 30.0
     verify_tls: bool = True
@@ -35,10 +36,12 @@ class Settings:
     @classmethod
     def from_env(cls) -> Settings:
         proxy = os.getenv("ST2AT_PROXY", "").strip() or None
+        proxy_region = os.getenv("ST2AT_PROXY_REGION", "").strip().upper() or None
         return cls(
             host=os.getenv("ST2AT_HOST", "0.0.0.0"),
             port=int(os.getenv("ST2AT_PORT", "8000")),
             proxy=proxy,
+            proxy_region=proxy_region,
             impersonate=os.getenv("ST2AT_IMPERSONATE", "chrome150"),
             timeout=_env_float("ST2AT_TIMEOUT", 30.0),
             verify_tls=_env_bool("ST2AT_VERIFY_TLS", True),
@@ -47,6 +50,7 @@ class Settings:
     def client_kwargs(self) -> dict[str, object]:
         return {
             "proxy": self.proxy,
+            "proxy_region": self.proxy_region,
             "impersonate": self.impersonate,
             "timeout": self.timeout,
             "verify_tls": self.verify_tls,
