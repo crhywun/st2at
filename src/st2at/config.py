@@ -28,7 +28,7 @@ class Settings:
     host: str = "0.0.0.0"
     port: int = 8000
     proxy: str | None = None
-    impersonate: str = "chrome110"
+    impersonate: str = "chrome150"
     timeout: float = 30.0
     verify_tls: bool = True
 
@@ -39,7 +39,7 @@ class Settings:
             host=os.getenv("ST2AT_HOST", "0.0.0.0"),
             port=int(os.getenv("ST2AT_PORT", "8000")),
             proxy=proxy,
-            impersonate=os.getenv("ST2AT_IMPERSONATE", "chrome110"),
+            impersonate=os.getenv("ST2AT_IMPERSONATE", "chrome150"),
             timeout=_env_float("ST2AT_TIMEOUT", 30.0),
             verify_tls=_env_bool("ST2AT_VERIFY_TLS", True),
         )

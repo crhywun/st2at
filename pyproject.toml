@@ -23,7 +23,7 @@ classifiers = [
   "Topic :: Internet :: WWW/HTTP",
 ]
 dependencies = [
-  "curl-cffi>=0.6.0",
+  "curl-cffi>=0.16.3",
   "fastapi>=0.109.0",
   "pydantic>=2.5.0",
   "uvicorn[standard]>=0.27.0",

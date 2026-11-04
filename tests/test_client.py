@@ -101,7 +101,7 @@ async def test_refresh_posts_exact_protocol_and_parses_result():
 
     assert factory.kwargs == {
         "proxy": "http://proxy.example:8080",
-        "impersonate": "chrome110",
+        "impersonate": "chrome150",
         "timeout": 12.0,
         "verify": False,
     }

@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Changed
+
+- Default browser fingerprint is now `chrome150` for the Chrome 146–150 range
+- Minimum `curl-cffi` version is now `0.16.3`
+
 ## [0.1.0] - 2026-11-04
 
 ### Added

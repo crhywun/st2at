@@ -21,7 +21,7 @@ from .token import extract_claims, normalize_session_token
 
 DEFAULT_BASE_URL = "https://chatgpt.com"
 SESSION_PATH = "/api/auth/session"
-DEFAULT_IMPERSONATE = "chrome110"
+DEFAULT_IMPERSONATE = "chrome150"
 
 _WORKSPACE_RE = re.compile(r"^[A-Za-z0-9_-]{1,200}$")
 _ACCEPT = (

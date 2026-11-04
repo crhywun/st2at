@@ -61,7 +61,7 @@ Connection: keep-alive
 
 `sessionToken` 如果返回了，就是轮换后的新 ST，后续要替换旧值；没返回就继续用原 ST。`idToken` 可能不存在。
 
-> 源项目通过 `curl_cffi` 的 `chrome110` 浏览器指纹发请求。直接用普通 `requests` 或 `httpx` 默认指纹，容易被 Cloudflare 挡在 `403`。这是整个方法里最容易漏掉的一层。
+> 源项目通过 `curl_cffi` 的 `chrome110` 浏览器指纹发请求；本项目按 Chrome 146–150 的要求把默认值改为 `chrome150`。直接用普通 `requests` 或 `httpx` 默认指纹，容易被 Cloudflare 挡在 `403`。这是整个方法里最容易漏掉的一层。
 
 完整拆解见 [docs/protocol.md](docs/protocol.md)。
 
@@ -254,11 +254,18 @@ HTTP 服务的配置全部来自环境变量：
 | `ST2AT_HOST` | `0.0.0.0` | 监听地址 |
 | `ST2AT_PORT` | `8000` | 监听端口 |
 | `ST2AT_PROXY` | 空 | 显式代理，如 `http://user:pass@host:8080` 或 `socks5h://...` |
-| `ST2AT_IMPERSONATE` | `chrome110` | curl_cffi 浏览器指纹 |
+| `ST2AT_IMPERSONATE` | `chrome150` | curl_cffi 浏览器指纹，可选 `chrome146` / `chrome150` |
 | `ST2AT_TIMEOUT` | `30` | 单次请求超时秒数 |
 | `ST2AT_VERIFY_TLS` | `true` | 是否校验 TLS 证书 |
 
 CLI 还支持 `--proxy`、`--impersonate`、`--timeout`、`--insecure`。
+
+`curl_cffi 0.16.3` 的 Chrome profile 里，146–150 区间只有 `chrome146` 与 `chrome150` 两个精确值；`chrome147`、`chrome148`、`chrome149` 没有独立 profile。默认 `chrome150`，需要固定 146 时用：
+
+```bash
+ST2AT_IMPERSONATE=chrome146 st2at refresh --st-file -
+```
+
 
 ## 从源项目抽取了哪些代码
 
@@ -273,7 +280,7 @@ CLI 还支持 `--proxy`、`--impersonate`、`--timeout`、`--insecure`。
 1. `GET https://chatgpt.com/api/auth/session`
 2. `Cookie: __Secure-next-auth.session-token=<ST>`
 3. 指定 `account_id` 时改用 `exchange_workspace_token=true&workspace_id=...&reason=setCurrentAccount`
-4. 用 `curl_cffi` 的浏览器指纹发送，默认 `chrome110`
+4. 用 `curl_cffi` 的浏览器指纹发送；源项目默认 `chrome110`，本项目按 146–150 要求默认 `chrome150`
 5. 解析 `accessToken`、`sessionToken`、`idToken`
 6. 把返回的 `sessionToken` 视为轮换后的 ST
 

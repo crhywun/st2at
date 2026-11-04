@@ -54,7 +54,7 @@ https://chatgpt.com/api/auth/session?exchange_workspace_token=true&workspace_id=
 
 ### 2.3 浏览器指纹
 
-这是请求成功率的重点。源项目用 `curl_cffi.requests.AsyncSession`：
+这是请求成功率的重点。源项目用 `curl_cffi.requests.AsyncSession`，它当时写的是 `chrome110`：
 
 ```python
 AsyncSession(
@@ -64,6 +64,8 @@ AsyncSession(
     trust_env=False,
 )
 ```
+
+本项目要求 Chrome 146–150 区间，默认改为 `chrome150`，需要固定 146 时用 `chrome146`。`curl_cffi 0.16.3` 的精确 profile 只有 `chrome146` 与 `chrome150`，没有 `chrome147`、`chrome148`、`chrome149`。
 
 如果改用普通 `requests`/`httpx` 默认 TLS 指纹，Cloudflare 可能直接返回 `403`，即使 Cookie 本身有效。
 
@@ -138,7 +140,7 @@ async def st_to_at(st: str, workspace_id: str | None = None) -> dict:
     }
 
     async with AsyncSession(
-        impersonate="chrome110",
+        impersonate="chrome150",
         timeout=30,
         verify=True,
         trust_env=False,
