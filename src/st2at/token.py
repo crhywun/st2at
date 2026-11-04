@@ -42,7 +42,7 @@ def normalize_session_token(raw: str) -> str:
 
     Chunked NextAuth cookies (``...session-token.0``, ``...session-token.1``)
     are joined in index order. Only the session cookie is kept; other cookies
-    are ignored so the request matches the extracted protocol.
+    are ignored so the request matches the reference protocol.
     """
 
     if not isinstance(raw, str):

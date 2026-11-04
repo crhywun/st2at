@@ -1,17 +1,20 @@
 st2at
 Copyright (c) 2026 st2at contributors
 
-This project contains an independently packaged extraction of the
-ST -> AT exchange method from team-manage-refresh:
+This project is an independent implementation that references the
+ST -> AT exchange behavior of team-manage-refresh:
 
   https://github.com/loLollipop/team-manage-refresh
   app/services/chatgpt.py
   ChatGPTService.refresh_access_token_with_session_token()
 
-Upstream copyright:
+It is not a fork of that application and does not include its account
+management, database, Team operations, or administrative modules.
+
+Reference project copyright:
 
   MIT License
   Copyright (c) 2026 Tibbar
 
-The upstream code is licensed under the MIT License. A copy of the MIT
+The reference project is licensed under the MIT License. A copy of the MIT
 License is included in LICENSE.

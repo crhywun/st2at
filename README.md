@@ -13,9 +13,11 @@
 
 ---
 
-## 它是什么
+## 项目定位
 
-`st2at` 是从 [team-manage-refresh](https://github.com/loLollipop/team-manage-refresh) 中抽出的最小独立实现，只保留它的 `refresh_access_token_with_session_token()` 能力：
+`st2at` 是一个独立的最小项目，参考了 [team-manage-refresh](https://github.com/loLollipop/team-manage-refresh) 中 `ChatGPTService.refresh_access_token_with_session_token()` 所体现的 ST → AT 协议行为，并把这条链路单独实现、单独测试、单独发布。
+
+它不是 `team-manage-refresh` 的 fork，也不包含该项目的账号管理、数据库、Team 运营、兑换码、定时任务等模块。
 
 ```text
 __Secure-next-auth.session-token  ──GET /api/auth/session──▶  accessToken
@@ -23,13 +25,11 @@ __Secure-next-auth.session-token  ──GET /api/auth/session──▶  accessTo
                                                               idToken（可能返回）
 ```
 
-它适合做：
+适合这些场景：
 
 - 命令行里快速把 ST 换成 AT
 - 给脚本或其他服务提供一个只负责换 Token 的 HTTP 接口
 - 作为一个可读、可测试的 ChatGPT Web 会话协议参考实现
-
-它不包含：账号导入、Team 管理、RT 刷新、密码登录、数据库、定时任务、兑换码、代理池。
 
 ## 核心协议
 
@@ -53,15 +53,15 @@ Connection: keep-alive
 
 ```json
 {
-  "accessToken": "eyJ...",
-  "sessionToken": "eyJ...",
-  "idToken": "eyJ..."
+  "accessToken": "<ACCESS_TOKEN>",
+  "sessionToken": "<SESSION_TOKEN>",
+  "idToken": "<ID_TOKEN>"
 }
 ```
 
 `sessionToken` 如果返回了，就是轮换后的新 ST，后续要替换旧值；没返回就继续用原 ST。`idToken` 可能不存在。
 
-> 源项目通过 `curl_cffi` 的 `chrome110` 浏览器指纹发请求；本项目按 Chrome 146–150 的要求把默认值改为 `chrome150`。直接用普通 `requests` 或 `httpx` 默认指纹，容易被 Cloudflare 挡在 `403`。这是整个方法里最容易漏掉的一层。
+> 参考项目通过 `curl_cffi` 的 `chrome110` 浏览器指纹发请求；本项目按 Chrome 146–150 的要求把默认值改为 `chrome150`。直接用普通 `requests` 或 `httpx` 默认指纹，容易被 Cloudflare 挡在 `403`。
 
 完整拆解见 [docs/protocol.md](docs/protocol.md)。
 
@@ -276,7 +276,7 @@ proxy.example.com:10000:demo-user-region-JP-session-demo123-sessTime-5:example-p
 
 - 裸格式按 `socks5h://` 连接
 - `-region-JP` 固定出口国家；`ST2AT_PROXY_REGION=US` 可覆盖
-- 每次 `refresh()` 都把 `-session-abc123` 换成新的随机 session，保证每次请求使用不同出口 IP
+- 每次 `refresh()` 都把 `-session-demo123` 换成新的随机 session，保证每次请求使用不同出口 IP
 - 原有 `-sessTime-5` 保留，不改成固定默认值
 - 标准 `http://` / `https://` 静态代理原样传入
 
@@ -294,33 +294,32 @@ printf '%s' "$ST" | st2at refresh --st-file -
 ST2AT_IMPERSONATE=chrome146 st2at refresh --st-file -
 ```
 
+## 与参考项目的关系
 
-## 从源项目抽取了哪些代码
+参考项目：
 
-源项目：
+- 仓库：[loLollipop/team-manage-refresh](https://github.com/loLollipop/team-manage-refresh)
+- 参考文件：`app/services/chatgpt.py`
+- 参考方法：`ChatGPTService.refresh_access_token_with_session_token()`
 
-- 仓库：`loLollipop/team-manage-refresh`
-- 文件：`app/services/chatgpt.py`
-- 方法：`ChatGPTService.refresh_access_token_with_session_token()`
-
-抽取时保留的行为：
+`st2at` 保留了这条单次请求链路的行为：
 
 1. `GET https://chatgpt.com/api/auth/session`
 2. `Cookie: __Secure-next-auth.session-token=<ST>`
 3. 指定 `account_id` 时改用 `exchange_workspace_token=true&workspace_id=...&reason=setCurrentAccount`
-4. 用 `curl_cffi` 的浏览器指纹发送；源项目默认 `chrome110`，本项目按 146–150 要求默认 `chrome150`
+4. 用 `curl_cffi` 的浏览器指纹发送；参考项目当时使用 `chrome110`，本项目按 146–150 要求默认 `chrome150`
 5. 解析 `accessToken`、`sessionToken`、`idToken`
 6. 把返回的 `sessionToken` 视为轮换后的 ST
 
-独立项目里删掉了：
+`st2at` 不包含：
 
 - SQLAlchemy 模型与加密存储
 - Team 账号、代理池、Free 号池
 - RT 刷新和 OAuth 回调
 - 定时预刷新
-- 所有后台管理页面
+- 后台管理页面
 
-差异：本项目默认开启 TLS 证书校验；源项目为兼容其代理链路使用了 `verify=False`。需要兼容抓包代理时，设 `ST2AT_VERIFY_TLS=false` 或 CLI 加 `--insecure`。
+差异：本项目默认开启 TLS 证书校验；参考项目为兼容其代理链路使用了 `verify=False`。需要兼容抓包代理时，设 `ST2AT_VERIFY_TLS=false` 或 CLI 加 `--insecure`。
 
 ## 开发
 
@@ -332,4 +331,4 @@ PYTHONPATH=src pytest -q
 
 ## License
 
-MIT。抽取来源的版权声明见 [NOTICE](NOTICE)。
+MIT。参考项目的版权声明见 [NOTICE](NOTICE)。

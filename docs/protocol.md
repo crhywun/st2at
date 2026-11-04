@@ -1,6 +1,6 @@
 # ST → AT 协议拆解
 
-本文记录从 `team-manage-refresh` 的 `app/services/chatgpt.py` 中抽出的 ST 换 AT 方法。目标是把行为写清楚，方便独立实现、测试和排障。
+本文整理 ST → AT 协议，参考了 `team-manage-refresh` 的 `app/services/chatgpt.py` 中 `refresh_access_token_with_session_token()` 的实现思路。目标是把行为写清楚，方便独立实现、测试和排障。
 
 ## 1. 前置条件
 
