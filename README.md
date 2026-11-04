@@ -29,6 +29,7 @@ __Secure-next-auth.session-token  ──GET /api/auth/session──▶  accessTo
 
 - 命令行里快速把 ST 换成 AT
 - 给脚本或其他服务提供一个只负责换 Token 的 HTTP 接口
+- 在网页、CLI、API 三个入口里选择目标 `workspace_id`
 - 作为一个可读、可测试的 ChatGPT Web 会话协议参考实现
 
 ## 核心协议
@@ -320,6 +321,13 @@ ST2AT_IMPERSONATE=chrome146 st2at refresh --st-file -
 - 后台管理页面
 
 差异：本项目默认开启 TLS 证书校验；参考项目为兼容其代理链路使用了 `verify=False`。需要兼容抓包代理时，设 `ST2AT_VERIFY_TLS=false` 或 CLI 加 `--insecure`。
+
+参考项目围绕 Team 运营后台组织代码，Account ID 是账号记录里的一个字段，没有独立的单账号空间选择页面。本项目把空间选择拆成独立入口：
+
+- 网页端：`WORKSPACE ID` 输入框
+- CLI：`--workspace-id`
+- HTTP：`POST /v1/refresh` 的 `workspace_id`
+- 上游请求：自动追加 `exchange_workspace_token=true&workspace_id=...&reason=setCurrentAccount`
 
 ## 开发
 
