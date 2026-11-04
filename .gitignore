@@ -71,3 +71,6 @@ data/
 # Logs
 *.log
 *.db
+
+# Local batch work and credentials
+.local/

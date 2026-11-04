@@ -29,6 +29,11 @@ class SessionRejectedError(ST2ATError):
     http_status = 401
 
 
+class SessionRefreshError(ST2ATError):
+    code = "refresh_access_token_error"
+    http_status = 502
+
+
 class RateLimitedError(ST2ATError):
     code = "upstream_rate_limited"
     http_status = 429

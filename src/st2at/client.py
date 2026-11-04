@@ -13,6 +13,7 @@ from .errors import (
     ExpiredAccessTokenError,
     InvalidWorkspaceError,
     RateLimitedError,
+    SessionRefreshError,
     SessionRejectedError,
     UpstreamHTTPError,
     UpstreamResponseError,
@@ -194,6 +195,16 @@ class ST2ATClient:
                     raise UpstreamResponseError(
                         "ChatGPT returned a non-JSON response for the session endpoint"
                     )
+                upstream_error = payload.get("error")
+                if (
+                    isinstance(upstream_error, str)
+                    and upstream_error.strip() == "RefreshAccessTokenError"
+                ):
+                    raise SessionRefreshError(
+                        "ChatGPT session could not refresh the accessToken "
+                        "(upstream error: RefreshAccessTokenError)"
+                    )
+
                 access_token = _nonempty_str(
                     payload.get("accessToken") or payload.get("access_token")
                 )

@@ -9,6 +9,7 @@ from st2at.errors import (
     ExpiredAccessTokenError,
     InvalidWorkspaceError,
     RateLimitedError,
+    SessionRefreshError,
     SessionRejectedError,
     UpstreamHTTPError,
     UpstreamResponseError,
@@ -205,4 +206,21 @@ async def test_rejects_expired_access_token_returned_with_http_200():
         session_factory=FakeFactory(FakeResponse(200, {"accessToken": expired}))
     )
     with pytest.raises(ExpiredAccessTokenError, match="expired accessToken"):
+        await client.refresh("st-value")
+
+
+@pytest.mark.asyncio
+async def test_reports_upstream_refresh_access_token_error():
+    client = ST2ATClient(
+        session_factory=FakeFactory(
+            FakeResponse(
+                200,
+                {
+                    "accessToken": make_at(),
+                    "error": "RefreshAccessTokenError",
+                },
+            )
+        )
+    )
+    with pytest.raises(SessionRefreshError, match="RefreshAccessTokenError"):
         await client.refresh("st-value")

@@ -237,6 +237,7 @@ asyncio.run(main())
 | 400 | `invalid_session_token` | 输入为空、格式坏、Cookie 中没有 ST |
 | 400 | `invalid_workspace` | `workspace_id` 含非法字符 |
 | 401 | `session_rejected` | 上游返回 401/403，ST 被拒绝 |
+| 502 | `refresh_access_token_error` | ST 对应的 NextAuth 会话刷新链失效，返回 `RefreshAccessTokenError` |
 | 429 | `upstream_rate_limited` | 上游返回 429 |
 | 502 | `upstream_http_error` | 上游返回其他 4xx/5xx |
 | 502 | `upstream_bad_response` | 200 但 JSON 坏或没有 `accessToken` |
